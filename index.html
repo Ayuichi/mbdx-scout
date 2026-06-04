@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MBDX KMU Scout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #2d7d4f;
+    --green-light: #e8f5ee;
+    --green-mid: #c3e6d0;
+    --purple: #6b4f9e;
+    --purple-light: #f0ebf9;
+    --orange: #e8722a;
+    --orange-light: #fdf0e8;
+    --dark: #1a1a2e;
+    --mid: #4a4a6a;
+    --muted: #8888aa;
+    --border: #e8e8f0;
+    --bg: #fafafa;
+    --white: #ffffff;
+    --surface: #ffffff;
+    --input-bg: #ffffff;
+    --prompt-bg: #f8f7ff;
+    --prompt-border: #c4b8e8;
+  }
+
+  [data-theme="dark"] {
+    --green: #4ade80;
+    --green-light: #0f2a1a;
+    --green-mid: #1a4a2e;
+    --purple: #a78bfa;
+    --purple-light: #1a1030;
+    --orange: #fb923c;
+    --orange-light: #2a1500;
+    --dark: #f0ede6;
+    --mid: #c0bdd8;
+    --muted: #6b6890;
+    --border: #2a2a3e;
+    --bg: #0e0e1a;
+    --white: #161626;
+    --surface: #1c1c2e;
+    --input-bg: #12121f;
+    --prompt-bg: #1a1530;
+    --prompt-border: #4a3a7a;
+  }
+
+  /* DARK MODE TOGGLE */
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toggle-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .toggle-switch {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .toggle-switch input { display: none; }
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--border);
+    border-radius: 11px;
+    transition: background 0.25s;
+  }
+  .toggle-switch input:checked + .toggle-track { background: var(--purple); }
+  .toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.25s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle-switch input:checked ~ .toggle-thumb { transform: translateX(18px); }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--dark);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 8px; }
+  .logo {
+    color: var(--green);
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.12em;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .logo-divider {
+    color: var(--border);
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 1;
+  }
+  .app-name {
+    color: var(--dark);
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0.7;
+  }
+  .step-counter { font-size: 12px; color: var(--muted); font-weight: 600; }
+
+  /* PROGRESS */
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    position: sticky;
+    top: 57px;
+    z-index: 99;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), var(--purple));
+    transition: width 0.4s ease;
+  }
+
+  /* TABS */
+  .tabs {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    overflow-x: auto;
+    position: sticky;
+    top: 60px;
+    z-index: 98;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 14px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .tab-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .tab-label {
+    font-size: 12px;
+    font-weight: 500;
+    transition: color 0.2s;
+    color: var(--muted);
+  }
+
+  /* MAIN CONTENT */
+  .main {
+    flex: 1;
+    padding: 36px 32px;
+    max-width: 680px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  /* STEP HEADER */
+  .step-header {
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .step-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+  }
+  .step-title {
+    font-size: 24px;
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+  .step-subtitle {
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  /* GUIDANCE BOX */
+  .guidance-box {
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 24px;
+    border-left-width: 4px;
+    border-left-style: solid;
+    border-top: 1px solid;
+    border-right: 1px solid;
+    border-bottom: 1px solid;
+  }
+  .guidance-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+  .guidance-item {
+    font-size: 13px;
+    color: var(--mid);
+    margin-bottom: 5px;
+    padding-left: 10px;
+    line-height: 1.6;
+    display: flex;
+    gap: 8px;
+  }
+  .guidance-arrow { flex-shrink: 0; }
+
+  /* AI PROMPT BOX */
+  .prompt-box {
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 24px;
+    background: var(--prompt-bg);
+    border: 1.5px dashed var(--prompt-border);
+    position: relative;
+  }
+  .prompt-box-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .prompt-box-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--purple);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .prompt-box-label::before {
+    content: '✦';
+    font-size: 10px;
+  }
+  .copy-btn {
+    background: var(--purple);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .copy-btn:hover { opacity: 0.85; }
+  .copy-btn.copied {
+    background: var(--green);
+  }
+  .prompt-text {
+    font-size: 12.5px;
+    color: var(--mid);
+    line-height: 1.75;
+    font-family: 'DM Sans', sans-serif;
+    white-space: pre-wrap;
+    user-select: all;
+  }
+  .prompt-hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  /* FIELDS */
+  .field { margin-bottom: 20px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--mid);
+    margin-bottom: 7px;
+    letter-spacing: 0.03em;
+  }
+  .field input, .field textarea {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--dark);
+    font-size: 14px;
+    padding: 12px 14px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    resize: vertical;
+  }
+  .field input::placeholder, .field textarea::placeholder { color: #b0b0c8; }
+  .field textarea { min-height: 90px; }
+
+  /* BRIEFING */
+  .briefing-header {
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .briefing-tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .briefing-name {
+    font-size: 24px;
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 4px;
+  }
+  .briefing-meta { font-size: 13px; color: var(--muted); }
+
+  .briefing-section {
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    border-left-width: 4px;
+    border-left-style: solid;
+    border-top: 1px solid;
+    border-right: 1px solid;
+    border-bottom: 1px solid;
+  }
+  .briefing-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+  .briefing-section-text {
+    font-size: 13px;
+    color: var(--mid);
+    line-height: 1.7;
+    margin-bottom: 8px;
+  }
+
+  .einstieg-box {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-top: 20px;
+  }
+  .einstieg-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--green);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+  .einstieg-text {
+    font-size: 14px;
+    color: var(--mid);
+    line-height: 1.8;
+  }
+
+  .empty-state {
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    padding: 40px 0;
+  }
+
+  /* NAV */
+  .nav {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 680px;
+    width: 100%;
+    margin: 0 auto;
+    position: sticky;
+    bottom: 0;
+  }
+
+  .btn {
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+  .btn-back {
+    background: none;
+    border: 1.5px solid var(--border);
+    color: var(--mid);
+  }
+  .btn-back:disabled { color: var(--border); cursor: not-allowed; }
+  .btn-next { color: white; }
+  .btn-reset {
+    background: var(--green-light);
+    border: 1.5px solid var(--green-mid);
+    color: var(--green);
+  }
+
+  .dots { display: flex; gap: 5px; align-items: center; }
+  .dot {
+    height: 6px;
+    border-radius: 3px;
+    transition: all 0.3s;
+  }
+
+  /* Step panels */
+  .step-panel { display: none; }
+  .step-panel.active { display: block; }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .step-panel.active { animation: fadeIn 0.25s ease; }
+
+  /* Touch-friendly on mobile */
+  @media (max-width: 600px) {
+    .header, .tabs, .main, .nav { padding-left: 16px; padding-right: 16px; }
+    .step-title { font-size: 20px; }
+  }
+
+  /* ACTION BUTTONS */
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  .action-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--mid);
+  }
+  .action-btn:hover { border-color: var(--green); color: var(--green); }
+  .action-btn.primary {
+    background: var(--green);
+    border-color: var(--green);
+    color: white;
+    box-shadow: 0 4px 12px rgba(45,125,79,0.25);
+  }
+  .action-btn.primary:hover { opacity: 0.88; }
+  .action-icon { font-size: 15px; }
+
+  /* NEXT STEPS */
+  .next-steps {
+    margin-top: 8px;
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+  }
+  .next-steps-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
+  }
+  .next-step-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    transition: border-color 0.2s;
+  }
+  .next-step-item:hover { border-color: var(--green); }
+  .next-step-number {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--green-light);
+    color: var(--green);
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .next-step-content {}
+  .next-step-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 3px;
+  }
+  .next-step-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* PRINT STYLES */
+  @media print {
+    .header, .tabs, .progress-bar, .nav, .action-bar,
+    .prompt-box, .guidance-box, .next-steps { display: none !important; }
+    .step-panel { display: none !important; }
+    #panel-5 { display: block !important; }
+    .main { padding: 0 !important; max-width: 100% !important; }
+    body { background: white !important; }
+    .briefing-header { background: #e8f5ee !important; }
+    .next-steps { display: block !important; }
+    .action-bar { display: none !important; }
+  }</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <span class="logo">MBDX</span>
+    <span class="logo-divider">|</span>
+    <span class="app-name">KMU Scout</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <div class="theme-toggle">
+      <span class="toggle-label" id="themeLabel">☀️</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb" id="toggleThumb">☀️</div>
+      </label>
+    </div>
+    <span class="step-counter" id="stepCounter">Schritt 1 von 6</span>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-bar">
+  <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+</div>
+
+<!-- TABS -->
+<div class="tabs" id="tabs"></div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- STEP 0: Basisdaten -->
+  <div class="step-panel active" id="panel-0">
+    <div class="step-header">
+      <span class="step-badge" style="background: var(--green-light); color: var(--green);">Schritt 01</span>
+      <h1 class="step-title">Unternehmen erfassen</h1>
+      <p class="step-subtitle">Die Grundlage für alles Weitere.</p>
+    </div>
+    <div class="field"><label>Firmenname</label><input type="text" id="firmenname" placeholder="z.B. Müller Bau GmbH"></div>
+    <div class="field"><label>Branche / Fachbereich</label><input type="text" id="branche" placeholder="z.B. Hoch- und Tiefbau"></div>
+    <div class="field"><label>Unternehmensgröße</label><input type="text" id="groesse" placeholder="z.B. 50–200 Mitarbeitende"></div>
+    <div class="field"><label>Ansprechpartner / Entscheider</label><input type="text" id="ansprechpartner" placeholder="z.B. Thomas Müller, GF"></div>
+    <div class="field"><label>Standort</label><input type="text" id="standort" placeholder="z.B. Bremen"></div>
+  </div>
+
+  <!-- STEP 1: Selbstbild -->
+  <div class="step-panel" id="panel-1">
+    <div class="step-header">
+      <span class="step-badge" style="background: var(--purple-light); color: var(--purple);">Schritt 02</span>
+      <h1 class="step-title">Wie sieht sich das Unternehmen selbst?</h1>
+      <p class="step-subtitle">Website: Werte, Sprache, Positionierung.</p>
+    </div>
+    <div class="guidance-box" style="background: var(--purple-light); border-left-color: var(--purple); border-color: rgba(107,79,158,0.2);">
+      <div class="guidance-title" style="color: var(--purple);">Besuche die Unternehmenswebsite. Achte auf:</div>
+      <div class="guidance-item"><span class="guidance-arrow" style="color: var(--purple);">›</span> Welche Werte werden explizit kommuniziert?</div>
+      <div class="guidance-item"><span class="guidance-arrow" style="color: var(--purple);">›</span> Wie sprechen sie über ihre Geschichte / Gründung?</div>
+      <div class="guidance-item"><span class="guidance-arrow" style="color: var(--purple);">›</span> Welche Sprache nutzen sie: formal, regional, stolz, sachlich?</div>
+      <div class="guidance-item"><span class="guidance-arrow" style="color: var(--purple);">›</span> Gibt es einen erkennbaren Markenkern oder Slogan?</div>
+    </div>
+    <div class="prompt-box">
+      <div class="prompt-box-header">
+        <span class="prompt-box-label">KI-Prompt zum Kopieren</span>
+        <button class="copy-btn" onclick="copyPrompt(this, 'prompt-selbstbild')">Kopieren</button>
+      </div>
+      <div class="prompt-text" id="prompt-selbstbild"></div>
+      <div class="prompt-hint">→ Funktioniert mit ChatGPT, Claude, Perplexity & Co.</div>
+    </div>
+    <div class="field"><label>Kommunizierte Werte & Markenkern</label><textarea id="website_werte" placeholder="z.B. 'Familienbetrieb seit 1987', 'Qualität vor Schnelligkeit', regionaler Bezug..."></textarea></div>
+    <div class="field"><label>Tonalität & Sprache</label><textarea id="website_sprache" placeholder="z.B. Sehr direkt, handwerksstolz, wenig Marketing-Deutsch..."></textarea></div>
+  </div>
+
+  <!-- STEP 2: Innenleben -->
+  <div class="step-panel" id="panel-2">
+    <div class="step-header">
+      <span class="step-badge" style="background: var(--green-light); color: var(--green);">Schritt 03</span>
+      <h1 class="step-title">Was sagen die Menschen im Unternehmen?</h1>
+      <p class="step-subtitle">Kununu / Indeed: interne Stimmung & Schmerzpunkte.</p>
+    </div>
+    <div class="guidance-box" style="background: var(--green-light); border-left-color: var(--green); border-color: rgba(45,125,79,0.2);">
+      <div class="guidance-title" style="color: var(--green);">Suche das Unternehmen auf Kununu und/oder Indeed:</div>
+      <div class="guidance-item"><span class="guidance-arrow" style="color: var(--green);">›</span> Was wird wiederholt gelobt? (= Stolz, Identität)</div>
+      <div class="guidance-item"><span class="guidance-arrow" style="color: var(--green);">›</span> Was wird wiederholt kritisiert? (= latente Schmerzpunkte)</div>
+      <div class="guidance-item"><span class="guidance-arrow" style="color: var(--green);">›</span> Wie reagiert die Führung auf Kritik?</div>
+      <div class="guidance-item"><span class="guidance-arrow" style="color: var(--green);">›</span> Gibt es Hinweise auf Fluktuation, Kultur, Führungsstil?</div>
+    </div>
+    <div class="prompt-box">
+      <div class="prompt-box-header">
+        <span class="prompt-box-label">KI-Prompt zum Kopieren</span>
+        <button class="copy-btn" onclick="copyPrompt(this, 'prompt-innenleben')">Kopieren</button>
+      </div>
+      <div class="prompt-text" id="prompt-innenleben"></div>
+      <div class="prompt-hint">→ Funktioniert mit ChatGPT, Claude, Perplexity & Co.</div>
+    </div>
+    <div class="field"><label>Wiederholt genannte Stärken</label><textarea id="kununu_staerken" placeholder="z.B. Zusammenhalt im Team, flache Hierarchien, Flexibilität..."></textarea></div>
+    <div class="field"><label>Wiederholt genannte Reibungspunkte</label><textarea id="kununu_schwaechen" placeholder="z.B. Kommunikation zwischen Abteilungen, fehlende Entwicklungsperspektiven..."></textarea></div>
+  </div>
+
+  <!-- STEP 3: Bewegung -->
+  <div class="step-panel" id="panel-3">
+    <div class="step-header">
+      <span class="step-badge" style="background: var(--orange-light); color: var(--orange);">Schritt 04</span>
+      <h1 class="step-title">Wo bewegt sich das Unternehmen gerade?</h1>
+      <p class="step-subtitle">Stellenanzeigen + LinkedIn: Wachstum, Lücken, Persönlichkeit.</p>
+    </div>
+    <div class="guidance-box" style="background: var(--orange-light); border-left-color: var(--orange); border-color: rgba(232,114,42,0.2);">
+      <div class="guidance-title" style="color: var(--orange);">Schau aktuelle Stellenanzeigen und LinkedIn des Entscheiders an:</div>
+      <div class="guidance-item"><span class="guidance-arrow" style="color: var(--orange);">›</span> Welche Rollen werden gesucht? (= Wachstumsrichtung)</div>
+      <div class="guidance-item"><span class="guidance-arrow" style="color: var(--orange);">›</span> Welche Kompetenzen fehlen scheinbar? (= möglicher Bedarf)</div>
+      <div class="guidance-item"><span class="guidance-arrow" style="color: var(--orange);">›</span> Was postet der Ansprechpartner auf LinkedIn?</div>
+      <div class="guidance-item"><span class="guidance-arrow" style="color: var(--orange);">›</span> Welche Themen treiben ihn/sie erkennbar um?</div>
+    </div>
+    <div class="prompt-box">
+      <div class="prompt-box-header">
+        <span class="prompt-box-label">KI-Prompt zum Kopieren</span>
+        <button class="copy-btn" onclick="copyPrompt(this, 'prompt-bewegung')">Kopieren</button>
+      </div>
+      <div class="prompt-text" id="prompt-bewegung"></div>
+      <div class="prompt-hint">→ Funktioniert mit ChatGPT, Claude, Perplexity & Co.</div>
+    </div>
+    <div class="field"><label>Erkenntnisse aus Stellenanzeigen</label><textarea id="stellen_insights" placeholder="z.B. 3 offene Führungspositionen → Wachstum oder Fluktuation? Suche nach HR-Profil..."></textarea></div>
+    <div class="field"><label>LinkedIn-Persönlichkeit des Entscheiders</label><textarea id="linkedin_insights" placeholder="z.B. Postet stolz über Ausbildungsabschlüsse, spricht über Fachkräftemangel..."></textarea></div>
+  </div>
+
+  <!-- STEP 4: Außenwahrnehmung -->
+  <div class="step-panel" id="panel-4">
+    <div class="step-header">
+      <span class="step-badge" style="background: var(--purple-light); color: var(--purple);">Schritt 05</span>
+      <h1 class="step-title">Wie sieht die Außenwelt das Unternehmen?</h1>
+      <p class="step-subtitle">Lokalpresse, IHK-Berichte & User Reviews.</p>
+    </div>
+    <div class="guidance-box" style="background: var(--purple-light); border-left-color: var(--purple); border-color: rgba(107,79,158,0.2);">
+      <div class="guidance-title" style="color: var(--purple);">Suche in Lokalpresse, IHK und Bewertungsportalen:</div>
+      <div class="guidance-item"><span class="guidance-arrow" style="color: var(--purple);">›</span> Gibt es Auszeichnungen, Jubiläen, Pressemitteilungen?</div>
+      <div class="guidance-item"><span class="guidance-arrow" style="color: var(--purple);">›</span> Was ist die öffentliche Story des Unternehmens?</div>
+      <div class="guidance-item"><span class="guidance-arrow" style="color: var(--purple);">›</span> Was sagen Kunden in Google Reviews, Trustpilot o.Ä.?</div>
+      <div class="guidance-item"><span class="guidance-arrow" style="color: var(--purple);">›</span> Gibt es Diskrepanzen zwischen Selbst- und Fremdbild?</div>
+    </div>
+    <div class="prompt-box">
+      <div class="prompt-box-header">
+        <span class="prompt-box-label">KI-Prompt zum Kopieren</span>
+        <button class="copy-btn" onclick="copyPrompt(this, 'prompt-aussen')">Kopieren</button>
+      </div>
+      <div class="prompt-text" id="prompt-aussen"></div>
+      <div class="prompt-hint">→ Funktioniert mit ChatGPT, Claude, Perplexity & Co.</div>
+    </div>
+    <div class="field"><label>Presse / IHK: öffentliche Story</label><textarea id="presse_insights" placeholder="z.B. Auszeichnung als Ausbildungsbetrieb 2023, Expansion angekündigt..."></textarea></div>
+    <div class="field"><label>User Reviews: Kundenperspektive</label><textarea id="reviews_insights" placeholder="z.B. Ø 4.2 Sterne, häufig gelobt: Zuverlässigkeit & persönlicher Kontakt..."></textarea></div>
+  </div>
+
+  <!-- STEP 5: Briefing -->
+  <div class="step-panel" id="panel-5">
+    <div class="step-header">
+      <span class="step-badge" style="background: var(--green-light); color: var(--green);">Schritt ✓</span>
+      <h1 class="step-title">Kontakt-Briefing</h1>
+      <p class="step-subtitle">Verdichtetes Wissen für den Erstkontakt auf Augenhöhe.</p>
+    </div>
+    <div id="briefingContent"></div>
+  </div>
+
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <button class="btn btn-back" id="btnBack" onclick="navigate(-1)" disabled>← Zurück</button>
+  <div class="dots" id="dots"></div>
+  <button class="btn btn-next" id="btnNext" onclick="navigate(1)">Weiter →</button>
+</div>
+
+<script>
+const STEPS = [
+  { label: "Basisdaten", icon: "01", color: "var(--green)", colorLight: "var(--green-light)" },
+  { label: "Selbstbild", icon: "02", color: "var(--purple)", colorLight: "var(--purple-light)" },
+  { label: "Innenleben", icon: "03", color: "var(--green)", colorLight: "var(--green-light)" },
+  { label: "Bewegung", icon: "04", color: "var(--orange)", colorLight: "var(--orange-light)" },
+  { label: "Außenwahrnehmung", icon: "05", color: "var(--purple)", colorLight: "var(--purple-light)" },
+  { label: "Briefing", icon: "✓", color: "var(--green)", colorLight: "var(--green-light)" },
+];
+
+let current = 0;
+
+// Build tabs
+const tabsEl = document.getElementById('tabs');
+STEPS.forEach((s, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab';
+  btn.id = `tab-${i}`;
+  btn.onclick = () => goTo(i);
+  btn.innerHTML = `<span class="tab-dot" id="dot-tab-${i}">${s.icon}</span><span class="tab-label" id="label-tab-${i}">${s.label}</span>`;
+  tabsEl.appendChild(btn);
+});
+
+// Build dots
+const dotsEl = document.getElementById('dots');
+STEPS.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'dot';
+  d.id = `dot-nav-${i}`;
+  dotsEl.appendChild(d);
+});
+
+function goTo(i) {
+  // Hide current panel
+  document.getElementById(`panel-${current}`).classList.remove('active');
+  current = i;
+  document.getElementById(`panel-${current}`).classList.add('active');
+
+  // Update UI
+  updateUI();
+
+  // Scroll to top of main
+  document.querySelector('.main').scrollTop = 0;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (current === 5) renderBriefing();
+}
+
+function navigate(dir) {
+  const next = current + dir;
+  if (next < 0 || next >= STEPS.length) return;
+  goTo(next);
+}
+
+function updateUI() {
+  const s = STEPS[current];
+
+  // Counter
+  document.getElementById('stepCounter').textContent = `Schritt ${current + 1} von ${STEPS.length}`;
+
+  // Progress
+  const pct = (current / (STEPS.length - 1)) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  // Tabs
+  STEPS.forEach((st, i) => {
+    const dot = document.getElementById(`dot-tab-${i}`);
+    const label = document.getElementById(`label-tab-${i}`);
+    const tab = document.getElementById(`tab-${i}`);
+    if (i === current) {
+      dot.style.background = st.color;
+      dot.style.color = 'white';
+      label.style.color = st.color;
+      label.style.fontWeight = '700';
+      tab.style.borderBottomColor = st.color;
+    } else if (i < current) {
+      dot.style.background = st.colorLight;
+      dot.style.color = st.color;
+      dot.textContent = '✓';
+      label.style.color = 'var(--muted)';
+      label.style.fontWeight = '500';
+      tab.style.borderBottomColor = 'transparent';
+    } else {
+      dot.style.background = 'var(--border)';
+      dot.style.color = 'var(--muted)';
+      dot.textContent = st.icon;
+      label.style.color = 'var(--muted)';
+      label.style.fontWeight = '500';
+      tab.style.borderBottomColor = 'transparent';
+    }
+  });
+
+  // Nav dots
+  STEPS.forEach((st, i) => {
+    const d = document.getElementById(`dot-nav-${i}`);
+    if (i === current) {
+      d.style.width = '18px';
+      d.style.background = st.color;
+    } else if (i < current) {
+      d.style.width = '6px';
+      d.style.background = STEPS[i].color;
+      d.style.opacity = '0.4';
+    } else {
+      d.style.width = '6px';
+      d.style.background = 'var(--border)';
+      d.style.opacity = '1';
+    }
+  });
+
+  // Buttons
+  const btnBack = document.getElementById('btnBack');
+  const btnNext = document.getElementById('btnNext');
+
+  btnBack.disabled = current === 0;
+
+  if (current === STEPS.length - 1) {
+    btnNext.textContent = '+ Neues Briefing';
+    btnNext.style.background = 'var(--green-light)';
+    btnNext.style.color = 'var(--green)';
+    btnNext.style.border = '1.5px solid var(--green-mid)';
+    btnNext.style.boxShadow = 'none';
+    btnNext.onclick = resetAll;
+  } else {
+    btnNext.textContent = 'Weiter →';
+    btnNext.style.background = s.color;
+    btnNext.style.color = 'white';
+    btnNext.style.border = 'none';
+    btnNext.style.boxShadow = `0 4px 12px ${s.color}44`;
+    btnNext.onclick = () => navigate(1);
+  }
+
+  // Focus input on field pages
+  if (current < 5) {
+    const firstInput = document.querySelector(`#panel-${current} input, #panel-${current} textarea`);
+    if (firstInput) setTimeout(() => firstInput.focus(), 300);
+  }
+}
+
+function getVal(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+function renderBriefing() {
+  const firm = getVal('firmenname') || '–';
+  const contact = getVal('ansprechpartner') || '–';
+  const sector = getVal('branche') || '–';
+  const size = getVal('groesse') || '–';
+  const location = getVal('standort') || '–';
+
+  const sections = [
+    {
+      label: 'Selbstbild & Identität',
+      color: 'var(--purple)', bg: 'var(--purple-light)', borderColor: 'rgba(107,79,158,0.2)',
+      items: [getVal('website_werte'), getVal('website_sprache')].filter(Boolean)
+    },
+    {
+      label: 'Interne Dynamik',
+      color: 'var(--green)', bg: 'var(--green-light)', borderColor: 'rgba(45,125,79,0.2)',
+      items: [
+        getVal('kununu_staerken') ? `Stärken: ${getVal('kununu_staerken')}` : '',
+        getVal('kununu_schwaechen') ? `Reibung: ${getVal('kununu_schwaechen')}` : ''
+      ].filter(Boolean)
+    },
+    {
+      label: 'Bewegung & Momentum',
+      color: 'var(--orange)', bg: 'var(--orange-light)', borderColor: 'rgba(232,114,42,0.2)',
+      items: [getVal('stellen_insights'), getVal('linkedin_insights')].filter(Boolean)
+    },
+    {
+      label: 'Außenwahrnehmung',
+      color: 'var(--purple)', bg: 'var(--purple-light)', borderColor: 'rgba(107,79,158,0.2)',
+      items: [getVal('presse_insights'), getVal('reviews_insights')].filter(Boolean)
+    },
+  ].filter(s => s.items.length > 0);
+
+  let html = `
+    <div class="briefing-header" style="background: linear-gradient(135deg, var(--green-light), #f0f9f4); border: 1.5px solid var(--green-mid);">
+      <div class="briefing-tag" style="color: var(--green);">Zielunternehmen</div>
+      <div class="briefing-name">${firm}</div>
+      <div class="briefing-meta">${contact} · ${sector} · ${size} · ${location}</div>
+    </div>
+  `;
+
+  if (sections.length === 0) {
+    html += `<div class="empty-state">Fülle die vorherigen Schritte aus, um das Briefing zu generieren.</div>`;
+  } else {
+    sections.forEach(sec => {
+      html += `
+        <div class="briefing-section" style="background: ${sec.bg}; border-left-color: ${sec.color}; border-color: ${sec.borderColor};">
+          <div class="briefing-section-label" style="color: ${sec.color};">${sec.label}</div>
+          ${sec.items.map(item => `<div class="briefing-section-text">${item}</div>`).join('')}
+        </div>
+      `;
+    });
+
+    const einstieg = getVal('linkedin_insights')
+      ? `Referenziere konkret, was ${contact} zuletzt oeffentlich beschaeftigt, kombiniert mit einem benannten Schmerzpunkt aus den Mitarbeiterstimmen. Zeige, dass du ${firm} bereits kennst, bevor du von MBDX sprichst.`
+      : `Beginne mit einem konkreten Bezug zur Geschichte oder den Werten von ${firm}. Vermeide generische Beratungssprache. Sprich auf Augenhoehe, als jemand, der das Unternehmen bereits kennt.`;
+
+    html += `
+      <div class="einstieg-box">
+        <div class="einstieg-label">Empfohlener Einstieg</div>
+        <div class="einstieg-text">${einstieg}</div>
+      </div>
+    `;
+  }
+
+  html += `
+    <div class="action-bar">
+      <button class="action-btn primary" onclick="window.print()">
+        <span class="action-icon">🖨️</span> Drucken / Als PDF speichern
+      </button>
+      <button class="action-btn" onclick="saveBriefing()">
+        <span class="action-icon">💾</span> Als Textdatei speichern
+      </button>
+    </div>
+
+    <div class="next-steps">
+      <div class="next-steps-title">Was jetzt?</div>
+
+      <div class="next-step-item">
+        <div class="next-step-number">1</div>
+        <div class="next-step-content">
+          <div class="next-step-label">Erstkontakt formulieren</div>
+          <div class="next-step-desc">Nutze den empfohlenen Einstieg als Basis. Kanal wählen: E-Mail, LinkedIn oder Telefon. Konkrete Bezüge aus dem Briefing einbauen, kein generisches Template.</div>
+        </div>
+      </div>
+
+      <div class="next-step-item">
+        <div class="next-step-number">2</div>
+        <div class="next-step-content">
+          <div class="next-step-label">Intern abstimmen</div>
+          <div class="next-step-desc">Welches MBDX-Produkt passt zu den gefundenen Schmerzpunkten? Wer geht in das Gespräch? Briefing intern teilen und Ansprache gemeinsam schärfen.</div>
+        </div>
+      </div>
+
+      <div class="next-step-item">
+        <div class="next-step-number">3</div>
+        <div class="next-step-content">
+          <div class="next-step-label">Erstkontakt durchführen</div>
+          <div class="next-step-desc">Ziel ist nicht der sofortige Abschluss, sondern ein Gespräch. Erfolg = Entscheider möchte mehr erfahren. Reaktion dokumentieren.</div>
+        </div>
+      </div>
+
+      <div class="next-step-item">
+        <div class="next-step-number">4</div>
+        <div class="next-step-content">
+          <div class="next-step-label">Nachbereitung</div>
+          <div class="next-step-desc">Was hat funktioniert, was nicht? Briefing bei Bedarf ergänzen. Folgetermin oder Angebot vorbereiten. Erkenntnisse ins nächste Scout-Profil einfließen lassen.</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('briefingContent').innerHTML = html;
+}
+
+function resetAll() {
+  ['firmenname','branche','groesse','ansprechpartner','standort',
+   'website_werte','website_sprache','kununu_staerken','kununu_schwaechen',
+   'stellen_insights','linkedin_insights','presse_insights','reviews_insights'
+  ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  goTo(0);
+}
+
+// Focus styles via JS (can't do :focus with CSS vars easily for dynamic colors)
+document.querySelectorAll('.field input, .field textarea').forEach(el => {
+  el.addEventListener('focus', () => {
+    const panel = el.closest('.step-panel');
+    if (!panel) return;
+    const idx = parseInt(panel.id.split('-')[1]);
+    const color = ['#2d7d4f','#6b4f9e','#2d7d4f','#e8722a','#6b4f9e'][idx] || '#2d7d4f';
+    el.style.borderColor = color;
+    el.style.boxShadow = `0 0 0 3px ${color}22`;
+  });
+  el.addEventListener('blur', () => {
+    el.style.borderColor = 'var(--border)';
+    el.style.boxShadow = 'none';
+  });
+});
+
+// SAVE AS TEXT FILE
+function saveBriefing(firmName) {
+  const firm = getVal('firmenname') || 'Unbekannt';
+  const contact = getVal('ansprechpartner') || '-';
+  const sector = getVal('branche') || '-';
+  const size = getVal("groesse") || "-";
+  const location = getVal('standort') || '-';
+
+  const lines = [
+    'MBDX KMU SCOUT - KONTAKT-BRIEFING',
+    '='.repeat(40),
+    '',
+    `Unternehmen:       ${firm}`,
+    `Ansprechpartner:   ${contact}`,
+    `Branche:           ${sector}`,
+    `Größe:           ${size}`,
+    `Standort:          ${location}`,
+    '',
+    '--- SELBSTBILD & IDENTITAET ---',
+    getVal('website_werte') || '-',
+    getVal('website_sprache') || '-',
+    '',
+    '--- INTERNE DYNAMIK ---',
+    getVal('kununu_staerken') ? 'Staerken: ' + getVal('kununu_staerken') : '-',
+    getVal('kununu_schwaechen') ? 'Reibung: ' + getVal('kununu_schwaechen') : '-',
+    '',
+    '--- BEWEGUNG & MOMENTUM ---',
+    getVal('stellen_insights') || '-',
+    getVal('linkedin_insights') || '-',
+    '',
+    '--- AUSSENWAHRNEHMUNG ---',
+    getVal('presse_insights') || '-',
+    getVal('reviews_insights') || '-',
+    '',
+    '--- NAECHSTE SCHRITTE ---',
+    '1. Erstkontakt formulieren - konkrete Bezüge aus dem Briefing einbauen',
+    '2. Intern abstimmen - passendes MBDX-Produkt identifizieren',
+    '3. Erstkontakt durchführen - Ziel: Gespräch ermöglichen',
+    '4. Nachbereitung - dokumentieren und Learnings sichern',
+    '',
+    `Erstellt: ${new Date().toLocaleDateString('de-DE')}`,
+  ];
+
+  const text = lines.join('\n');
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `MBDX_Scout_${firm.replace(/\s+/g, '_')}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// DARK MODE
+function toggleTheme() {
+  const isDark = document.getElementById('themeToggle').checked;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('toggleThumb').textContent = isDark ? '🌙' : '☀️';
+  localStorage.setItem('mbdx-theme', isDark ? 'dark' : 'light');
+}
+
+// Detect system preference on load
+(function() {
+  const saved = localStorage.getItem('mbdx-theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const useDark = saved ? saved === 'dark' : prefersDark;
+  if (useDark) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('themeToggle').checked = true;
+    document.getElementById('toggleThumb').textContent = '🌙';
+  }
+})();
+
+// Init
+updateUI();
+
+// PROMPT GENERATION: dynamisch mit Platzhaltern
+function buildPrompts() {
+  const firm = getVal('firmenname') || '[Firmenname]';
+  const contact = getVal('ansprechpartner') || '[Ansprechpartner, Position]';
+  const location = getVal('standort') || '[Standort]';
+
+  const prompts = {
+    'prompt-selbstbild': `Analysiere die Website von ${firm}.
+Welche Werte kommuniziert das Unternehmen explizit und implizit?
+Wie beschreiben sie ihre Geschichte und Gründung?
+Welche Sprache und Tonalität nutzen sie: formal, regional, handwerksstolz, sachlich?
+Gibt es einen erkennbaren Markenkern oder Slogan?
+Fasse deine Erkenntnisse in 3–5 prägnanten Stichpunkten zusammen.`,
+
+    'prompt-innenleben': `Suche nach Kununu- und Indeed-Bewertungen für ${firm} in ${location}.
+Welche Themen werden von Mitarbeitenden wiederholt gelobt?
+Welche Kritikpunkte tauchen wiederholt auf?
+Wie reagiert die Führungsebene auf Feedback?
+Gibt es Hinweise auf Fluktuation, Führungsstil oder Kulturprobleme?
+Fasse Muster zusammen: keine Einzelmeinungen, sondern wiederkehrende Signale.`,
+
+    'prompt-bewegung': `Suche nach aktuellen Stellenanzeigen von ${firm} auf Indeed, LinkedIn und Stepstone.
+Welche Rollen werden gesucht und was verrät das über die Wachstumsrichtung?
+Welche Kompetenzen scheinen intern zu fehlen?
+Suche außerdem das LinkedIn-Profil von ${contact}.
+Welche Themen postet er/sie? Was beschäftigt ihn/sie öffentlich?
+Fasse in 3–4 Stichpunkten zusammen, was gerade in Bewegung ist.`,
+
+    'prompt-aussen': `Suche nach ${firm} in Lokalmedien, IHK-Berichten und Branchenportalen.
+Gibt es Auszeichnungen, Jubiläen oder relevante Pressemeldungen?
+Suche außerdem Google Reviews und Trustpilot-Bewertungen für ${firm}.
+Was sagen Kunden wiederholt: positiv wie negativ?
+Gibt es erkennbare Diskrepanzen zwischen dem Selbstbild des Unternehmens und der Außenwahrnehmung?
+Fasse in 3–4 Stichpunkten zusammen.`
+  };
+
+  Object.entries(prompts).forEach(([id, text]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  });
+}
+
+function copyPrompt(btn, promptId) {
+  const el = document.getElementById(promptId);
+  if (!el) return;
+  const text = el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Kopiert!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Kopieren';
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(() => {
+    // Fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = '✓ Kopiert!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Kopieren';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// Rebuild prompts whenever step 0 inputs change
+['firmenname','ansprechpartner','standort'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', buildPrompts);
+});
+
+// Initial prompt build
+buildPrompts();
+</script>
+</body>
+</html>
